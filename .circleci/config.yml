@@ -1,13 +1,13 @@
-# Javascript Node CircleCI 2.0 configuration file
+# JavaScript Node CircleCI 2.0 configuration file
 #
 # Check https://circleci.com/docs/2.0/language-javascript/ for more details
 #
 version: 2
 jobs:
-  build-job:
+  build:
     docker:
       # specify the version you desire here
-      - image: circleci/node:10.8.0
+      - image: circleci/node:7.10
 
       # Specify service dependencies here if necessary
       # CircleCI maintains a library of pre-built images
@@ -27,50 +27,11 @@ jobs:
             - v1-dependencies-
 
       - run: yarn install
-      - run: yarn run build
 
       - save_cache:
           paths:
             - node_modules
-            - dist
-            - package.json
-            - firebase.json
-            - .firebaserc
-          key: v1-dist-{{ .Environment.CIRCLE_BRANCH }}-{{ .Environment.CIRCLE_SHA1 }} 
+          key: v1-dependencies-{{ checksum "package.json" }}
 
       # run tests!
-      - run: yarn run test:unit 
-
-  deploy-job:
-       docker:
-         - image: circleci/node:10.8.0
-       working_directory: ~/repo 
-       steps:
-         - restore_cache:
-             keys:
-              - v1-dist-{{ .Environment.CIRCLE_BRANCH }}-{{ .Environment.CIRCLE_SHA1 }} 
-         - run:
-             name: show directory 
-             command: pwd
-         - run:
-             name: Install Firebase
-             command: npm install --save-dev firebase-tools
-         - run:
-             name: look in directory
-             command: ls -ltr
-         - run:
-             name: Deploy Master to Firebase
-             command: npm run firebase-deploy -- --token=$FIREBASE_DEPLOY_TOKEN    
-
-workflows:
-  version: 2
-
-  -deploy:
-    jobs:
-      - build-job
-      - deploy-job:
-          requires:
-            - build-job
-          filters:
-            branches:
-              only: master
+      - run: yarn test
